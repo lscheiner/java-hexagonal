@@ -1,13 +1,22 @@
 package br.scheiner.hexagonal.cadastro.domain;
 
-import br.scheiner.hexagonal.cadastro.domain.exceptions.DomainValidationException;
+import br.scheiner.hexagonal.cadastro.domain.exceptions.DomainException;
 
-public record Cpf(String value) {
-    public Cpf {
-        value = value == null ? null : value.replaceAll("\\D", "");
-        if (!isValid(value)) {
-            throw new DomainValidationException("CPF inválido");
-        }
+public final class Cpf extends DomainObject {
+
+    private final String value;
+
+    public Cpf(String value) {
+        
+    	var digits = value == null ? null : value.replaceAll("\\D", "");
+        
+        if (!isValid(digits))
+            throw new DomainException("CPF invalido");
+        this.value = digits;
+    }
+
+    public String getValue() {
+        return value;
     }
 
     private static boolean isValid(String cpf) {

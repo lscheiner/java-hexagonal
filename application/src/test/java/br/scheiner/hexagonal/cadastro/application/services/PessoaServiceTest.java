@@ -37,14 +37,14 @@ class PessoaServiceTest {
                 "123",
                 "Apto 101",
                 "Centro",
-                "São Paulo",
+                "Sao Paulo",
                 "SP",
                 new Cep("01001000"),
                 TipoEndereco.RESIDENCIAL
         );
         return new Pessoa(
                 UUID.randomUUID(),
-                "João da Silva",
+                "Joao da Silva",
                 new Cpf("52998224725"),
                 LocalDate.of(1990, 1, 1),
                 new Email("joao@email.com"),
@@ -60,13 +60,13 @@ class PessoaServiceTest {
         var cadastrada = service.cadastrar(pessoa);
 
         assertNotNull(cadastrada);
-        assertEquals(pessoa.id(), cadastrada.id());
-        assertEquals("João da Silva", cadastrada.nome());
-        assertTrue(repository.existsByCpf(pessoa.cpf()));
+        assertEquals(pessoa.getId(), cadastrada.getId());
+        assertEquals("Joao da Silva", cadastrada.getNome());
+        assertTrue(repository.existsByCpf(pessoa.getCpf()));
     }
 
     @Test
-    @DisplayName("Deve lançar CpfDuplicadoException ao cadastrar com CPF existente")
+    @DisplayName("Deve lancar CpfDuplicadoException ao cadastrar com CPF existente")
     void deveLancarExcecaoCpfDuplicado() {
         var pessoa = criarPessoaValida();
         service.cadastrar(pessoa);
@@ -80,12 +80,12 @@ class PessoaServiceTest {
         var pessoa = criarPessoaValida();
         service.cadastrar(pessoa);
 
-        var encontrada = service.buscar(pessoa.id());
-        assertEquals(pessoa.id(), encontrada.id());
+        var encontrada = service.buscar(pessoa.getId());
+        assertEquals(pessoa.getId(), encontrada.getId());
     }
 
     @Test
-    @DisplayName("Deve lançar PessoaNotFoundException ao buscar id inexistente")
+    @DisplayName("Deve lancar PessoaNotFoundException ao buscar id inexistente")
     void deveLancarExcecaoAoBuscarIdInexistente() {
         assertThrows(PessoaNotFoundException.class, () -> service.buscar(UUID.randomUUID()));
     }
@@ -97,16 +97,16 @@ class PessoaServiceTest {
         service.cadastrar(pessoa);
 
         var atualizada = service.atualizar(
-                pessoa.id(),
-                "João Silva Santos",
+                pessoa.getId(),
+                "Joao Silva Santos",
                 LocalDate.of(1990, 1, 1),
                 new Email("novo_email@email.com"),
                 "11988887777"
         );
 
-        assertEquals("João Silva Santos", atualizada.nome());
-        assertEquals("novo_email@email.com", atualizada.email().value());
-        assertEquals("11988887777", atualizada.telefone());
+        assertEquals("Joao Silva Santos", atualizada.getNome());
+        assertEquals("novo_email@email.com", atualizada.getEmail().getValue());
+        assertEquals("11988887777", atualizada.getTelefone());
     }
 
     @Test
@@ -115,13 +115,13 @@ class PessoaServiceTest {
         var pessoa = criarPessoaValida();
         service.cadastrar(pessoa);
 
-        service.excluir(pessoa.id());
+        service.excluir(pessoa.getId());
 
-        assertThrows(PessoaNotFoundException.class, () -> service.buscar(pessoa.id()));
+        assertThrows(PessoaNotFoundException.class, () -> service.buscar(pessoa.getId()));
     }
 
     @Test
-    @DisplayName("Deve adicionar endereço à pessoa")
+    @DisplayName("Deve adicionar endereco a pessoa")
     void deveAdicionarEndereco() {
         var pessoa = criarPessoaValida();
         service.cadastrar(pessoa);
@@ -132,14 +132,14 @@ class PessoaServiceTest {
                 "1000",
                 "Sala 50",
                 "Bela Vista",
-                "São Paulo",
+                "Sao Paulo",
                 "SP",
                 new Cep("01310100"),
                 TipoEndereco.COMERCIAL
         );
 
-        var atualizada = service.adicionarEndereco(pessoa.id(), novoEndereco);
-        assertEquals(2, atualizada.enderecos().size());
+        var atualizada = service.adicionarEndereco(pessoa.getId(), novoEndereco);
+        assertEquals(2, atualizada.getEnderecos().size());
     }
 
     private static class InMemoryPessoaRepository implements PessoaRepository {
@@ -147,7 +147,7 @@ class PessoaServiceTest {
 
         @Override
         public Pessoa save(Pessoa pessoa) {
-            database.put(pessoa.id(), pessoa);
+            database.put(pessoa.getId(), pessoa);
             return pessoa;
         }
 
@@ -158,7 +158,7 @@ class PessoaServiceTest {
 
         @Override
         public boolean existsByCpf(Cpf cpf) {
-            return database.values().stream().anyMatch(p -> p.cpf().value().equals(cpf.value()));
+            return database.values().stream().anyMatch(p -> p.getCpf().getValue().equals(cpf.getValue()));
         }
 
         @Override

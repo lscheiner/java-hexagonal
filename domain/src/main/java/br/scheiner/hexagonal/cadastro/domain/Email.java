@@ -1,13 +1,18 @@
 package br.scheiner.hexagonal.cadastro.domain;
 
-import br.scheiner.hexagonal.cadastro.domain.exceptions.DomainValidationException;
+public final class Email extends DomainObject {
 
-public record Email(String value) {
-    
-	public Email {
-        if (value != null && !value.isBlank() && !value.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) {
-            throw new DomainValidationException("E-mail inválido");
-        }
-        value = value == null || value.isBlank() ? null : value.trim().toLowerCase();
+    private static final String EMAIL_REGEX = "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$";
+
+    private final String value;
+
+    public Email(String value) {
+        if (value != null && !value.isBlank())
+            requireMatches(value.trim(), EMAIL_REGEX, "E-mail invalido");
+        this.value = trimOrNull(value);
+    }
+
+    public String getValue() {
+        return value;
     }
 }

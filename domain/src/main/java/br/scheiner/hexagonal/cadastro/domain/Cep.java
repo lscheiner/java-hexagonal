@@ -1,10 +1,15 @@
 package br.scheiner.hexagonal.cadastro.domain;
 
-import br.scheiner.hexagonal.cadastro.domain.exceptions.DomainValidationException;
+public final class Cep extends DomainObject {
 
-public record Cep(String value) {
-    public Cep {
-        value = value == null ? null : value.replaceAll("\\D", "");
-        if (value == null || !value.matches("\\d{8}")) throw new DomainValidationException("CEP inválido");
-    }
+	private final String value;
+
+	public Cep(String value) {
+		var digits = value == null ? null : value.replaceAll("\\D", "");
+		this.value = requireMatches(digits, "\\d{8}", "CEP invalido");
+	}
+
+	public String getValue() {
+		return value;
+	}
 }

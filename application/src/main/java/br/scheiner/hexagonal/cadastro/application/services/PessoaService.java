@@ -1,6 +1,7 @@
 package br.scheiner.hexagonal.cadastro.application.services;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 import br.scheiner.hexagonal.cadastro.application.exceptions.CpfDuplicadoException;
@@ -19,7 +20,7 @@ public class PessoaService {
     }
 
     public Pessoa cadastrar(Pessoa pessoa) {
-        if (repository.existsByCpf(pessoa.cpf())) {
+        if (repository.existsByCpf(pessoa.getCpf())) {
             throw new CpfDuplicadoException();
         }
         return repository.save(pessoa);
@@ -36,11 +37,26 @@ public class PessoaService {
 
     public void excluir(UUID id) {
         var pessoa = buscar(id);
-        repository.deleteById(pessoa.id());
+        repository.deleteById(pessoa.getId());
+    }
+
+    public Pessoa substituirEnderecos(UUID pessoaId, List<Endereco> novosEnderecos) {
+        var pessoaAtualizada = buscar(pessoaId).substituirEnderecos(novosEnderecos);
+        return repository.save(pessoaAtualizada);
     }
 
     public Pessoa adicionarEndereco(UUID pessoaId, Endereco endereco) {
         var pessoaAtualizada = buscar(pessoaId).adicionarEndereco(endereco);
+        return repository.save(pessoaAtualizada);
+    }
+
+    public Pessoa atualizarEndereco(UUID pessoaId, UUID enderecoId, Endereco novosDados) {
+        var pessoaAtualizada = buscar(pessoaId).atualizarEndereco(enderecoId, novosDados);
+        return repository.save(pessoaAtualizada);
+    }
+
+    public Pessoa removerEndereco(UUID pessoaId, UUID enderecoId) {
+        var pessoaAtualizada = buscar(pessoaId).removerEndereco(enderecoId);
         return repository.save(pessoaAtualizada);
     }
 }

@@ -1,41 +1,103 @@
 package br.scheiner.hexagonal.cadastro.domain;
 
-import br.scheiner.hexagonal.cadastro.domain.exceptions.DomainValidationException;
-
 import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
-public record Pessoa(
-		UUID id, 
-		String nome, 
-		Cpf cpf, 
-		LocalDate dataNascimento, 
-		Email email, 
-		String telefone,
-        List<Endereco> enderecos) {
-    
-	public Pessoa {
-        id = id == null ? UUID.randomUUID() : id;
-        if (nome == null || nome.isBlank()) throw new DomainValidationException("Nome obrigatório");
-        nome = nome.trim();
-        if (dataNascimento == null || dataNascimento.isAfter(LocalDate.now())) {
-            throw new DomainValidationException("Data de nascimento inválida");
-        }
-        if (enderecos == null || enderecos.isEmpty()) {
-            throw new DomainValidationException("A pessoa deve possuir ao menos um endereço");
-        }
-        enderecos = List.copyOf(enderecos);
-        telefone = telefone == null ? null : telefone.trim();
+import br.scheiner.hexagonal.cadastro.domain.exceptions.DomainException;
+
+public final class Pessoa extends DomainObject {
+
+    private final UUID id;
+    private final String nome;
+    private final Cpf cpf;
+    private final LocalDate dataNascimento;
+    private final Email email;
+    private final String telefone;
+    private final List<Endereco> enderecos;
+
+    public Pessoa(
+    		UUID id, 
+    		String nome, 
+    		Cpf cpf, 
+    		LocalDate dataNascimento,
+            Email email, 
+            String telefone, 
+            List<Endereco> enderecos
+            ) {
+        
+    	this.id = generateId(id);
+        this.nome = requireNonBlank(nome, "Nome");
+        this.cpf = cpf;
+
+        if (dataNascimento == null || dataNascimento.isAfter(LocalDate.now(ZoneId.of("America/Sao_Paulo"))))
+            throw new DomainException("Data de nascimento invalida");
+        
+        this.dataNascimento = dataNascimento;
+
+        if (enderecos == null || enderecos.isEmpty())
+            throw new DomainException("A pessoa deve possuir ao menos um endereco");
+        
+        this.enderecos = Collections.unmodifiableList(new ArrayList<>(enderecos));
+        this.email = email;
+        this.telefone = trimOrNull(telefone);
     }
+
+    public UUID getId() { return id; }
+    public String getNome() { return nome; }
+    public Cpf getCpf() { return cpf; }
+    public LocalDate getDataNascimento() { return dataNascimento; }
+    public Email getEmail() { return email; }
+    public String getTelefone() { return telefone; }
+    public List<Endereco> getEnderecos() { return enderecos; }
 
     public Pessoa atualizar(String nome, LocalDate dataNascimento, Email email, String telefone) {
         return new Pessoa(id, nome, cpf, dataNascimento, email, telefone, enderecos);
     }
 
-    public Pessoa adicionarEndereco(Endereco endereco) {
-        var novosEnderecos = new java.util.ArrayList<>(enderecos);
-        novosEnderecos.add(endereco);
+    public Pessoa substituirEnderecos(List<Endereco> novosEnderecos) {
         return new Pessoa(id, nome, cpf, dataNascimento, email, telefone, novosEnderecos);
+    }
+
+    public Pessoa adicionarEndereco(Endereco endereco) {
+        var novaLista = new ArrayList<>(this.enderecos);
+        novaLista.add(endereco);
+        return new Pessoa(id, nome, cpf, dataNascimento, email, telefone, novaLista);
+    }
+
+    public Pessoa atualizarEndereco(UUID enderecoId, Endereco novosDados) {
+       
+    	var novaLista = new ArrayList<Endereco>(this.enderecos.size());
+       
+        boolean alterado = false;
+
+        for (var atual : this.enderecos) {
+            if (atual.getId().equals(enderecoId)) {
+                novaLista.add(novosDados.comId(enderecoId));
+                alterado = true;
+            } else {
+                novaLista.add(atual);
+            }
+        }
+
+        if (!alterado)
+            throw new DomainException("Endereco nao encontrado para esta pessoa");
+
+        return new Pessoa(id, nome, cpf, dataNascimento, email, telefone, novaLista);
+    }
+
+    public Pessoa removerEndereco(UUID enderecoId) {
+        
+    	var novaLista = new ArrayList<>(this.enderecos);
+        
+        boolean removido = novaLista.removeIf(e -> e.getId().equals(enderecoId));
+
+        if (!removido)
+            throw new DomainException("Endereco nao encontrado para esta pessoa");
+
+        return new Pessoa(id, nome, cpf, dataNascimento, email, telefone, novaLista);
     }
 }

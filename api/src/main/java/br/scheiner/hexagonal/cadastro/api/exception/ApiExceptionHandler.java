@@ -1,15 +1,16 @@
 package br.scheiner.hexagonal.cadastro.api.exception;
 
-import br.scheiner.hexagonal.cadastro.application.exceptions.CpfDuplicadoException;
-import br.scheiner.hexagonal.cadastro.application.exceptions.PessoaNotFoundException;
-import br.scheiner.hexagonal.cadastro.domain.exceptions.DomainValidationException;
+import java.time.Instant;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.time.Instant;
+import br.scheiner.hexagonal.cadastro.application.exceptions.CpfDuplicadoException;
+import br.scheiner.hexagonal.cadastro.application.exceptions.PessoaNotFoundException;
+import br.scheiner.hexagonal.cadastro.domain.exceptions.DomainException;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
@@ -24,8 +25,8 @@ public class ApiExceptionHandler {
         return error(HttpStatus.CONFLICT, ex.getMessage());
     }
 
-    @ExceptionHandler(DomainValidationException.class)
-    public ResponseEntity<ErrorResponse> handleDomainValidation(DomainValidationException ex) {
+    @ExceptionHandler(DomainException.class)
+    public ResponseEntity<ErrorResponse> handleDomainValidation(DomainException ex) {
         return error(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
