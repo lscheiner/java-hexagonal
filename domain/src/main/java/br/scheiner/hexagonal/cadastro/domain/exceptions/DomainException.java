@@ -1,10 +1,10 @@
 package br.scheiner.hexagonal.cadastro.domain.exceptions;
 
-public class DomainValidationException extends DomainException {
+public class DomainException extends RuntimeException {
     
 	private static final long serialVersionUID = 1L;
 
-	public DomainValidationException(String message) {
+	public DomainException(String message) {
         super(message);
     }
 }

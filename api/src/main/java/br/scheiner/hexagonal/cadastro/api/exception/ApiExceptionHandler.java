@@ -1,19 +1,47 @@
 package br.scheiner.hexagonal.cadastro.api.exception;
 
-import br.scheiner.hexagonal.cadastro.application.exceptions.*;
+import br.scheiner.hexagonal.cadastro.application.exceptions.CpfDuplicadoException;
+import br.scheiner.hexagonal.cadastro.application.exceptions.PessoaNotFoundException;
 import br.scheiner.hexagonal.cadastro.domain.exceptions.DomainValidationException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
 import java.time.Instant;
-import org.springframework.http.*;
-import org.springframework.web.bind.annotation.*;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
+
     @ExceptionHandler(PessoaNotFoundException.class)
-    ResponseEntity<ErrorResponse> notFound(PessoaNotFoundException ex) { return error(HttpStatus.NOT_FOUND, ex); }
-    @ExceptionHandler({DomainValidationException.class, CpfDuplicadoException.class, IllegalArgumentException.class})
-    ResponseEntity<ErrorResponse> invalid(RuntimeException ex) { return error(ex instanceof CpfDuplicadoException ? HttpStatus.CONFLICT : HttpStatus.BAD_REQUEST, ex); }
-    private ResponseEntity<ErrorResponse> error(HttpStatus status, RuntimeException ex) {
-        return ResponseEntity.status(status).body(new ErrorResponse(Instant.now(), status.value(), ex.getMessage()));
+    public ResponseEntity<ErrorResponse> handleNotFound(PessoaNotFoundException ex) {
+        return error(HttpStatus.NOT_FOUND, ex.getMessage());
     }
-    record ErrorResponse(Instant timestamp, int status, String message) { }
+
+    @ExceptionHandler(CpfDuplicadoException.class)
+    public ResponseEntity<ErrorResponse> handleConflict(CpfDuplicadoException ex) {
+        return error(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    @ExceptionHandler(DomainValidationException.class)
+    public ResponseEntity<ErrorResponse> handleDomainValidation(DomainValidationException ex) {
+        return error(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidJson(HttpMessageNotReadableException ex) {
+        return error(HttpStatus.BAD_REQUEST, "Corpo da requisição inválido ou mal formatado");
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleGeneric(Exception ex) {
+        return error(HttpStatus.INTERNAL_SERVER_ERROR, "Ocorreu um erro interno inesperado");
+    }
+
+    private ResponseEntity<ErrorResponse> error(HttpStatus status, String message) {
+        return ResponseEntity.status(status).body(new ErrorResponse(Instant.now(), status.value(), message));
+    }
+
+    public record ErrorResponse(Instant timestamp, int status, String message) { }
 }

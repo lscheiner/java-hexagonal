@@ -1,3 +1,5 @@
 spring:
   application:
     name: cadastro
+  config:
+    import: optional:classpath:persistence.properties

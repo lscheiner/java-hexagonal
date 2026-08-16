@@ -1,15 +1,21 @@
-package br.scheiner.hexagonal.cadastro.domain.entities;
+package br.scheiner.hexagonal.cadastro.domain;
 
 import br.scheiner.hexagonal.cadastro.domain.exceptions.DomainValidationException;
-import br.scheiner.hexagonal.cadastro.domain.valueobjects.Cpf;
-import br.scheiner.hexagonal.cadastro.domain.valueobjects.Email;
+
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
-public record Pessoa(UUID id, String nome, Cpf cpf, LocalDate dataNascimento, Email email, String telefone,
-                     List<Endereco> enderecos) {
-    public Pessoa {
+public record Pessoa(
+		UUID id, 
+		String nome, 
+		Cpf cpf, 
+		LocalDate dataNascimento, 
+		Email email, 
+		String telefone,
+        List<Endereco> enderecos) {
+    
+	public Pessoa {
         id = id == null ? UUID.randomUUID() : id;
         if (nome == null || nome.isBlank()) throw new DomainValidationException("Nome obrigatório");
         nome = nome.trim();

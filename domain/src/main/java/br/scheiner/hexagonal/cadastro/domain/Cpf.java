@@ -1,4 +1,4 @@
-package br.scheiner.hexagonal.cadastro.domain.valueobjects;
+package br.scheiner.hexagonal.cadastro.domain;
 
 import br.scheiner.hexagonal.cadastro.domain.exceptions.DomainValidationException;
 

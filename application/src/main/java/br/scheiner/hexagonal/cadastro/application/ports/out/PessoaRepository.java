@@ -1,9 +1,10 @@
 package br.scheiner.hexagonal.cadastro.application.ports.out;
 
-import br.scheiner.hexagonal.cadastro.domain.entities.Pessoa;
-import br.scheiner.hexagonal.cadastro.domain.valueobjects.Cpf;
 import java.util.Optional;
 import java.util.UUID;
+
+import br.scheiner.hexagonal.cadastro.domain.Cpf;
+import br.scheiner.hexagonal.cadastro.domain.Pessoa;
 
 public interface PessoaRepository {
     Pessoa save(Pessoa pessoa);

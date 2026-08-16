@@ -1,39 +1,65 @@
 package br.scheiner.hexagonal.cadastro.api.controllers;
 
-import br.scheiner.hexagonal.cadastro.api.dto.*;
-import br.scheiner.hexagonal.cadastro.application.usecases.*;
-import java.net.URI;
-import java.util.UUID;
+import br.scheiner.hexagonal.cadastro.api.dto.AtualizarPessoaRequest;
+import br.scheiner.hexagonal.cadastro.api.dto.EnderecoRequest;
+import br.scheiner.hexagonal.cadastro.api.dto.PessoaRequest;
+import br.scheiner.hexagonal.cadastro.api.dto.PessoaResponse;
+import br.scheiner.hexagonal.cadastro.api.mapper.EnderecoApiMapper;
+import br.scheiner.hexagonal.cadastro.api.mapper.PessoaApiMapper;
+import br.scheiner.hexagonal.cadastro.application.services.PessoaService;
+import br.scheiner.hexagonal.cadastro.domain.Email;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.net.URI;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/pessoas")
 public class PessoaController {
-    private final CadastrarPessoaUseCase cadastrar;
-    private final BuscarPessoaUseCase buscar;
-    private final AtualizarPessoaUseCase atualizar;
-    private final ExcluirPessoaUseCase excluir;
-    private final AdicionarEnderecoUseCase adicionarEndereco;
-    public PessoaController(CadastrarPessoaUseCase cadastrar, BuscarPessoaUseCase buscar, AtualizarPessoaUseCase atualizar,
-                            ExcluirPessoaUseCase excluir, AdicionarEnderecoUseCase adicionarEndereco) {
-        this.cadastrar=cadastrar; this.buscar=buscar; this.atualizar=atualizar; this.excluir=excluir; this.adicionarEndereco=adicionarEndereco;
+
+    private final PessoaService service;
+    private final PessoaApiMapper pessoaMapper;
+    private final EnderecoApiMapper enderecoMapper;
+
+    public PessoaController(PessoaService service, PessoaApiMapper pessoaMapper, EnderecoApiMapper enderecoMapper) {
+        this.service = service;
+        this.pessoaMapper = pessoaMapper;
+        this.enderecoMapper = enderecoMapper;
     }
+
     @PostMapping
     public ResponseEntity<PessoaResponse> cadastrar(@RequestBody PessoaRequest request) {
-        var result = cadastrar.executar(new CadastrarPessoaCommand(request.nome(), request.cpf(), request.dataNascimento(), request.email(), request.telefone(),
-                request.enderecos() == null ? null : request.enderecos().stream().map(this::enderecoCommand).toList()));
-        return ResponseEntity.created(URI.create("/pessoas/" + result.id())).body(response(result));
+        var pessoa = pessoaMapper.toDomain(request);
+        var cadastrada = service.cadastrar(pessoa);
+        return ResponseEntity.created(URI.create("/pessoas/" + cadastrada.id()))
+                .body(pessoaMapper.toResponse(cadastrada));
     }
-    @GetMapping("/{id}") public PessoaResponse buscar(@PathVariable UUID id) { return response(buscar.executar(id)); }
-    @PutMapping("/{id}") public PessoaResponse atualizar(@PathVariable UUID id, @RequestBody AtualizarPessoaRequest request) {
-        return response(atualizar.executar(id, new AtualizarPessoaCommand(request.nome(), request.dataNascimento(), request.email(), request.telefone())));
+
+    @GetMapping("/{id}")
+    public PessoaResponse buscar(@PathVariable UUID id) {
+        var pessoa = service.buscar(id);
+        return pessoaMapper.toResponse(pessoa);
     }
-    @DeleteMapping("/{id}") public ResponseEntity<Void> excluir(@PathVariable UUID id) { excluir.executar(id); return ResponseEntity.noContent().build(); }
-    @PostMapping("/{id}/enderecos") public PessoaResponse adicionarEndereco(@PathVariable UUID id, @RequestBody EnderecoRequest request) {
-        return response(adicionarEndereco.executar(id, enderecoCommand(request)));
+
+    @PutMapping("/{id}")
+    public PessoaResponse atualizar(@PathVariable UUID id, @RequestBody AtualizarPessoaRequest request) {
+        var email = request.email() != null ? new Email(request.email()) : null;
+        var atualizada = service.atualizar(id, request.nome(), request.dataNascimento(), email, request.telefone());
+        return pessoaMapper.toResponse(atualizada);
     }
-    private EnderecoCommand enderecoCommand(EnderecoRequest e) { return new EnderecoCommand(e.logradouro(), e.numero(), e.complemento(), e.bairro(), e.cidade(), e.estado(), e.cep(), e.tipo()); }
-    private PessoaResponse response(PessoaResult p) { return new PessoaResponse(p.id(), p.nome(), p.cpf(), p.dataNascimento(), p.email(), p.telefone(),
-            p.enderecos().stream().map(e -> new EnderecoResponse(e.id(), e.logradouro(), e.numero(), e.complemento(), e.bairro(), e.cidade(), e.estado(), e.cep(), e.tipo())).toList()); }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> excluir(@PathVariable UUID id) {
+        service.excluir(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{id}/enderecos")
+    public PessoaResponse adicionarEndereco(@PathVariable UUID id, @RequestBody EnderecoRequest request) {
+        var endereco = enderecoMapper.toDomain(request);
+        var atualizada = service.adicionarEndereco(id, endereco);
+        return pessoaMapper.toResponse(atualizada);
+    }
 }
