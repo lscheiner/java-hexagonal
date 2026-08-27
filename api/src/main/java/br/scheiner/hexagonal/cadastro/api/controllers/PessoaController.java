@@ -24,7 +24,7 @@ import br.scheiner.hexagonal.cadastro.api.mapper.PessoaRequestMapper;
 import br.scheiner.hexagonal.cadastro.api.mapper.PessoaResponseMapper;
 import br.scheiner.hexagonal.cadastro.application.mapper.Mapper;
 import br.scheiner.hexagonal.cadastro.application.pagination.Paginacao;
-import br.scheiner.hexagonal.cadastro.application.services.PessoaService;
+import br.scheiner.hexagonal.cadastro.application.ports.in.PessoaService;
 import br.scheiner.hexagonal.cadastro.domain.Endereco;
 import br.scheiner.hexagonal.cadastro.domain.Pessoa;
 import io.swagger.v3.oas.annotations.Operation;
