@@ -1,12 +1,15 @@
 package br.scheiner.hexagonal.cadastro.persistence.adapter;
 
 import br.scheiner.hexagonal.cadastro.application.ports.out.PessoaRepository;
+import br.scheiner.hexagonal.cadastro.application.pagination.Pagina;
+import br.scheiner.hexagonal.cadastro.application.pagination.Paginacao;
 import br.scheiner.hexagonal.cadastro.domain.Cpf;
 import br.scheiner.hexagonal.cadastro.domain.Pessoa;
 import br.scheiner.hexagonal.cadastro.persistence.mapper.PessoaDomainMapper;
 import br.scheiner.hexagonal.cadastro.persistence.mapper.PessoaEntityMapper;
 import br.scheiner.hexagonal.cadastro.persistence.repository.PessoaJpaRepository;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.domain.PageRequest;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -36,6 +39,18 @@ public class JpaPessoaRepository implements PessoaRepository {
     @Override
     public Optional<Pessoa> findById(UUID id) {
         return repository.findById(id).map(domainMapper::map);
+    }
+
+    @Override
+    public Pagina<Pessoa> findAll(Paginacao paginacao) {
+        var resultado = repository.findAll(PageRequest.of(paginacao.pagina(), paginacao.tamanho()));
+        return new Pagina<>(
+                resultado.getContent().stream().map(domainMapper::map).toList(),
+                resultado.getNumber(),
+                resultado.getSize(),
+                resultado.getTotalElements(),
+                resultado.getTotalPages()
+        );
     }
 
     @Override

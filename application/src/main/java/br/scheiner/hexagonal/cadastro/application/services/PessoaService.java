@@ -1,13 +1,13 @@
 package br.scheiner.hexagonal.cadastro.application.services;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
 import br.scheiner.hexagonal.cadastro.application.exceptions.CpfDuplicadoException;
 import br.scheiner.hexagonal.cadastro.application.exceptions.PessoaNotFoundException;
+import br.scheiner.hexagonal.cadastro.application.pagination.Pagina;
+import br.scheiner.hexagonal.cadastro.application.pagination.Paginacao;
 import br.scheiner.hexagonal.cadastro.application.ports.out.PessoaRepository;
-import br.scheiner.hexagonal.cadastro.domain.Email;
 import br.scheiner.hexagonal.cadastro.domain.Endereco;
 import br.scheiner.hexagonal.cadastro.domain.Pessoa;
 
@@ -30,8 +30,26 @@ public class PessoaService {
         return repository.findById(id).orElseThrow(PessoaNotFoundException::new);
     }
 
-    public Pessoa atualizar(UUID id, String nome, LocalDate dataNascimento, Email email, String telefone) {
-        var pessoaAtualizada = buscar(id).atualizar(nome, dataNascimento, email, telefone);
+    public Pagina<Pessoa> listar(Paginacao paginacao) {
+        return repository.findAll(paginacao);
+    }
+
+    public Pessoa substituir(UUID id, Pessoa novosDados) {
+        var pessoaAtual = buscar(id);
+        if (!pessoaAtual.getCpf().getValue().equals(novosDados.getCpf().getValue())
+                && repository.existsByCpf(novosDados.getCpf())) {
+            throw new CpfDuplicadoException();
+        }
+
+        var pessoaAtualizada = new Pessoa(
+                id,
+                novosDados.getNome(),
+                novosDados.getCpf(),
+                novosDados.getDataNascimento(),
+                novosDados.getEmail(),
+                novosDados.getTelefone(),
+                novosDados.getEnderecos()
+        );
         return repository.save(pessoaAtualizada);
     }
 

@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import br.scheiner.hexagonal.cadastro.application.exceptions.CpfDuplicadoException;
+import br.scheiner.hexagonal.cadastro.application.exceptions.PaginacaoInvalidaException;
 import br.scheiner.hexagonal.cadastro.application.exceptions.PessoaNotFoundException;
 import br.scheiner.hexagonal.cadastro.domain.exceptions.DomainException;
 
@@ -33,6 +34,11 @@ public class ApiExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponse> handleInvalidJson(HttpMessageNotReadableException ex) {
         return error(HttpStatus.BAD_REQUEST, "Corpo da requisição inválido ou mal formatado");
+    }
+
+    @ExceptionHandler(PaginacaoInvalidaException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidPagination(PaginacaoInvalidaException ex) {
+        return error(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
     @ExceptionHandler(Exception.class)
