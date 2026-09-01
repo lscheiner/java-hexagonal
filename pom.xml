@@ -18,6 +18,8 @@
         <module>application</module>
         <module>api</module>
         <module>persistence</module>
+        <module>redis</module>
+        <module>outbox</module>
     </modules>
     <properties>
         <java.version>21</java.version>

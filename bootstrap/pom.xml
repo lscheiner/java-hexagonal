@@ -17,6 +17,16 @@
 		</dependency>
 		<dependency>
 			<groupId>br.scheiner.hexagonal</groupId>
+			<artifactId>redis</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>br.scheiner.hexagonal</groupId>
+			<artifactId>outbox</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>br.scheiner.hexagonal</groupId>
 			<artifactId>persistence</artifactId>
 			<version>${project.version}</version>
 		</dependency>

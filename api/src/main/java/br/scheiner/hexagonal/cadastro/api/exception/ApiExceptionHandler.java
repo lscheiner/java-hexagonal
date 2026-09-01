@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import br.scheiner.hexagonal.cadastro.application.exceptions.CpfDuplicadoException;
 import br.scheiner.hexagonal.cadastro.application.exceptions.PaginacaoInvalidaException;
 import br.scheiner.hexagonal.cadastro.application.exceptions.PessoaNotFoundException;
+import br.scheiner.hexagonal.cadastro.application.exceptions.SaldoInsuficienteException;
 import br.scheiner.hexagonal.cadastro.domain.exceptions.DomainException;
 
 @RestControllerAdvice
@@ -24,6 +25,11 @@ public class ApiExceptionHandler {
     @ExceptionHandler(CpfDuplicadoException.class)
     public ResponseEntity<ErrorResponse> handleConflict(CpfDuplicadoException ex) {
         return error(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    @ExceptionHandler(SaldoInsuficienteException.class)
+    public ResponseEntity<ErrorResponse> handleSaldoInsuficiente(SaldoInsuficienteException ex) {
+        return error(HttpStatus.UNPROCESSABLE_CONTENT, ex.getMessage());
     }
 
     @ExceptionHandler(DomainException.class)

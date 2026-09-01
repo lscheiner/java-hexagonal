@@ -5,5 +5,5 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface PessoaJpaRepository extends JpaRepository<PessoaEntity, UUID> {
-    boolean existsByCpf(String cpf);
+	boolean existsByCpf(String cpf);
 }
