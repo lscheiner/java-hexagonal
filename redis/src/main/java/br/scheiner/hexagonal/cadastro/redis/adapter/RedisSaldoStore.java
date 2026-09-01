@@ -17,7 +17,10 @@ public class RedisSaldoStore implements SaldoStore {
 
     private static final String STREAM = "saldo-events";
 
-    private static final Duration TTL = Duration.ofHours(24);
+    private static final Duration SALDO_TTL = Duration.ofHours(24);
+
+    private static final Duration IDEMPOTENCIA_MARGIN =
+            Duration.ofHours(12);
 
     private static final int DEBITADO = 1;
     private static final int JA_PROCESSADO = 0;
@@ -28,7 +31,15 @@ public class RedisSaldoStore implements SaldoStore {
     private static final DefaultRedisScript<Long> DEBITAR =
             new DefaultRedisScript<>(
                     """
-                    -- Idempotência
+                    -- =====================================================
+                    -- 1. Verifica idempotência
+                    --
+                    -- KEYS[2] = saldo:conta:<contaId>:refs
+                    -- ARGV[1] = refId
+                    --
+                    -- Se o refId já foi processado, não realiza o débito.
+                    -- =====================================================
+
                     if redis.call(
                         'SISMEMBER',
                         KEYS[2],
@@ -37,7 +48,14 @@ public class RedisSaldoStore implements SaldoStore {
                         return 0
                     end
 
-                    -- Obtém saldo
+
+                    -- =====================================================
+                    -- 2. Obtém e valida o saldo
+                    --
+                    -- KEYS[1] = saldo:conta:<contaId>
+                    -- ARGV[2] = valor do débito
+                    -- =====================================================
+
                     local saldo = tonumber(
                         redis.call('GET', KEYS[1])
                     )
@@ -56,37 +74,80 @@ public class RedisSaldoStore implements SaldoStore {
                         return -1
                     end
 
-                    -- Obtém o TTL restante do saldo
-                    local ttl = redis.call(
+
+                    -- =====================================================
+                    -- 3. Obtém o TTL restante do saldo
+                    --
+                    -- ARGV[5] = margem adicional de idempotência em segundos.
+                    --
+                    -- Exemplo:
+                    --
+                    -- saldo restante = 18 horas
+                    -- margem          = 12 horas
+                    -- refs             = 30 horas
+                    -- =====================================================
+
+                    local ttlSaldo = redis.call(
                         'TTL',
                         KEYS[1]
                     )
 
-                    -- Débito
+                    local ttlMargem = tonumber(ARGV[5])
+
+                    local ttlRefs = ttlSaldo + ttlMargem
+
+
+                    -- =====================================================
+                    -- 4. Realiza o débito
+                    -- =====================================================
+
                     local saldoAtual = redis.call(
                         'INCRBYFLOAT',
                         KEYS[1],
                         -valor
                     )
 
-                    -- Registra a transação.
-                    -- Se o Set não existir, o Redis cria automaticamente.
+
+                    -- =====================================================
+                    -- 5. Registra o refId
+                    --
+                    -- Se o Set ainda não existir, o Redis cria
+                    -- automaticamente a chave.
+                    -- =====================================================
+
                     redis.call(
                         'SADD',
                         KEYS[2],
                         ARGV[1]
                     )
 
-                    -- O refs expira junto com o saldo.
-                    if ttl > 0 then
+
+                    -- =====================================================
+                    -- 6. Define o TTL do Set de idempotência
+                    --
+                    -- O refs terá o TTL restante do saldo + 12 horas.
+                    -- =====================================================
+
+                    if ttlRefs > 0 then
                         redis.call(
                             'EXPIRE',
                             KEYS[2],
-                            ttl
+                            ttlRefs
                         )
                     end
 
-                    -- Publica evento
+
+                    -- =====================================================
+                    -- 7. Publica o evento no Redis Stream
+                    --
+                    -- KEYS[3] = saldo-events
+                    -- ARGV[3] = eventId
+                    -- ARGV[1] = refId
+                    -- ARGV[4] = contaId
+                    -- ARGV[2] = valor
+                    -- saldoAtual = saldo após o débito
+                    -- =====================================================
+
                     redis.call(
                         'XADD',
                         KEYS[3],
@@ -98,6 +159,11 @@ public class RedisSaldoStore implements SaldoStore {
                         'saldoAtual', saldoAtual,
                         'eventType', 'SALDO_DEBITADO'
                     )
+
+
+                    -- =====================================================
+                    -- 8. Sucesso
+                    -- =====================================================
 
                     return 1
                     """,
@@ -111,7 +177,9 @@ public class RedisSaldoStore implements SaldoStore {
     }
 
     @Override
-    public void inicializar( UUID contaId, BigDecimal limite) {
+    public void inicializar(
+            UUID contaId,
+            BigDecimal limite) {
 
         if (limite == null || limite.signum() < 0) {
             throw new IllegalArgumentException(
@@ -122,7 +190,7 @@ public class RedisSaldoStore implements SaldoStore {
         redis.opsForValue().set(
                 saldoKey(contaId),
                 limite.toPlainString(),
-                TTL
+                SALDO_TTL
         );
     }
 
@@ -145,7 +213,8 @@ public class RedisSaldoStore implements SaldoStore {
                 refId.toString(),
                 valor.toPlainString(),
                 eventId.toString(),
-                contaId.toString()
+                contaId.toString(),
+                String.valueOf(IDEMPOTENCIA_MARGIN.toSeconds())
         );
 
         return interpretarResultado(result);
