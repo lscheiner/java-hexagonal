@@ -25,45 +25,19 @@ public class RedisSaldoStore implements SaldoStore {
     private static final int CONTA_NAO_ENCONTRADA = -2;
     private static final int VALOR_INVALIDO = -3;
 
-    private static final DefaultRedisScript<Long> INICIALIZAR =
-            new DefaultRedisScript<>(
-                    """
-                    if redis.call('EXISTS', KEYS[1]) == 1 then
-                        return 0
-                    end
-
-                    redis.call(
-                        'SET',
-                        KEYS[1],
-                        ARGV[1],
-                        'EX',
-                        ARGV[2]
-                    )
-
-                    redis.call(
-                        'SADD',
-                        KEYS[2],
-                        '__initialized__'
-                    )
-
-                    redis.call(
-                        'EXPIRE',
-                        KEYS[2],
-                        ARGV[2]
-                    )
-
-                    return 1
-                    """,
-                    Long.class
-            );
-
     private static final DefaultRedisScript<Long> DEBITAR =
             new DefaultRedisScript<>(
                     """
-                    if redis.call('SISMEMBER', KEYS[2], ARGV[1]) == 1 then
+                    -- Idempotência
+                    if redis.call(
+                        'SISMEMBER',
+                        KEYS[2],
+                        ARGV[1]
+                    ) == 1 then
                         return 0
                     end
 
+                    -- Obtém saldo
                     local saldo = tonumber(
                         redis.call('GET', KEYS[1])
                     )
@@ -82,18 +56,37 @@ public class RedisSaldoStore implements SaldoStore {
                         return -1
                     end
 
+                    -- Obtém o TTL restante do saldo
+                    local ttl = redis.call(
+                        'TTL',
+                        KEYS[1]
+                    )
+
+                    -- Débito
                     local saldoAtual = redis.call(
                         'INCRBYFLOAT',
                         KEYS[1],
                         -valor
                     )
 
+                    -- Registra a transação.
+                    -- Se o Set não existir, o Redis cria automaticamente.
                     redis.call(
                         'SADD',
                         KEYS[2],
                         ARGV[1]
                     )
 
+                    -- O refs expira junto com o saldo.
+                    if ttl > 0 then
+                        redis.call(
+                            'EXPIRE',
+                            KEYS[2],
+                            ttl
+                        )
+                    end
+
+                    -- Publica evento
                     redis.call(
                         'XADD',
                         KEYS[3],
@@ -118,7 +111,7 @@ public class RedisSaldoStore implements SaldoStore {
     }
 
     @Override
-    public void inicializar(UUID contaId, BigDecimal limite) {
+    public void inicializar( UUID contaId, BigDecimal limite) {
 
         if (limite == null || limite.signum() < 0) {
             throw new IllegalArgumentException(
@@ -126,14 +119,10 @@ public class RedisSaldoStore implements SaldoStore {
             );
         }
 
-        redis.execute(
-                INICIALIZAR,
-                List.of(
-                        saldoKey(contaId),
-                        refsKey(contaId)
-                ),
+        redis.opsForValue().set(
+                saldoKey(contaId),
                 limite.toPlainString(),
-                String.valueOf(TTL.toSeconds())
+                TTL
         );
     }
 
@@ -195,9 +184,15 @@ public class RedisSaldoStore implements SaldoStore {
         }
 
         return switch (result.intValue()) {
-            case DEBITADO -> ResultadoDebito.DEBITADO;
-            case JA_PROCESSADO -> ResultadoDebito.JA_PROCESSADO;
-            case SALDO_INSUFICIENTE -> ResultadoDebito.SALDO_INSUFICIENTE;
+            case DEBITADO ->
+                    ResultadoDebito.DEBITADO;
+
+            case JA_PROCESSADO ->
+                    ResultadoDebito.JA_PROCESSADO;
+
+            case SALDO_INSUFICIENTE ->
+                    ResultadoDebito.SALDO_INSUFICIENTE;
+
             case CONTA_NAO_ENCONTRADA ->
                     throw new IllegalStateException(
                             "Saldo da conta não encontrado no Redis"
