@@ -1,10 +1,13 @@
 package br.scheiner.hexagonal.cadastro.domain.exceptions;
 
-public class DomainException extends RuntimeException {
-    
-	private static final long serialVersionUID = 1L;
+import java.io.Serial;
 
-	public DomainException(String message) {
+public class DomainException extends RuntimeException {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    public DomainException(String message) {
         super(message);
     }
 }

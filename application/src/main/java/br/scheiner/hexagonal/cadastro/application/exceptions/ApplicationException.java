@@ -1,7 +1,10 @@
 package br.scheiner.hexagonal.cadastro.application.exceptions;
 
+import java.io.Serial;
+
 public class ApplicationException extends RuntimeException {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public ApplicationException(String message) {

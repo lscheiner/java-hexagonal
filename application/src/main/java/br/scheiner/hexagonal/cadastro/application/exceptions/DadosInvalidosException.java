@@ -2,12 +2,12 @@ package br.scheiner.hexagonal.cadastro.application.exceptions;
 
 import java.io.Serial;
 
-public class SaldoInsuficienteException extends ApplicationException {
+public final class DadosInvalidosException extends ApplicationException {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public SaldoInsuficienteException() {
-        super("Saldo insuficiente");
+    public DadosInvalidosException(String message) {
+        super(message);
     }
 }

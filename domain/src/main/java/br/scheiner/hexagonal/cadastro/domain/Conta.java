@@ -20,7 +20,15 @@ public final class Conta extends DomainObject {
         }
     }
 
-    public UUID getId() { return id; }
-    public UUID getPessoaId() { return pessoaId; }
-    public BigDecimal getLimite() { return limite; }
+    public UUID getId() {
+        return id;
+    }
+
+    public UUID getPessoaId() {
+        return pessoaId;
+    }
+
+    public BigDecimal getLimite() {
+        return limite;
+    }
 }

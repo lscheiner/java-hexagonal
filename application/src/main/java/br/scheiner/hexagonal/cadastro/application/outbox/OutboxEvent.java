@@ -30,15 +30,41 @@ public final class OutboxEvent {
                 new ContaCriadaPayload(eventId, contaId, limite), Instant.now(), null);
     }
 
-    public UUID getId() { return id; }
-    public UUID getAggregateId() { return aggregateId; }
-    public String getEventType() { return eventType; }
-    public ContaCriadaPayload getPayload() { return payload; }
-    public Instant getCreatedAt() { return createdAt; }
-    public Instant getProcessadoEm() { return processadoEm; }
-    public boolean ehContaCriada() { return CONTA_CRIADA.equals(eventType); }
-    public boolean estaPendente() { return processadoEm == null; }
-    public void marcarComoProcessado() { processadoEm = Instant.now(); }
+    public UUID getId() {
+        return id;
+    }
+
+    public UUID getAggregateId() {
+        return aggregateId;
+    }
+
+    public String getEventType() {
+        return eventType;
+    }
+
+    public ContaCriadaPayload getPayload() {
+        return payload;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public Instant getProcessadoEm() {
+        return processadoEm;
+    }
+
+    public boolean ehContaCriada() {
+        return CONTA_CRIADA.equals(eventType);
+    }
+
+    public boolean estaPendente() {
+        return processadoEm == null;
+    }
+
+    public void marcarComoProcessado() {
+        processadoEm = Instant.now();
+    }
 
     public record ContaCriadaPayload(UUID eventId, UUID contaId, BigDecimal limite) { }
 }

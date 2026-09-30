@@ -27,15 +27,41 @@ public final class Endereco extends DomainObject {
         this.cep = cep;
     }
 
-    public UUID getId() { return id; }
-    public String getLogradouro() { return logradouro; }
-    public String getNumero() { return numero; }
-    public String getComplemento() { return complemento; }
-    public String getBairro() { return bairro; }
-    public String getCidade() { return cidade; }
-    public String getEstado() { return estado; }
-    public Cep getCep() { return cep; }
-    public TipoEndereco getTipo() { return tipo; }
+    public UUID getId() {
+        return id;
+    }
+
+    public String getLogradouro() {
+        return logradouro;
+    }
+
+    public String getNumero() {
+        return numero;
+    }
+
+    public String getComplemento() {
+        return complemento;
+    }
+
+    public String getBairro() {
+        return bairro;
+    }
+
+    public String getCidade() {
+        return cidade;
+    }
+
+    public String getEstado() {
+        return estado;
+    }
+
+    public Cep getCep() {
+        return cep;
+    }
+
+    public TipoEndereco getTipo() {
+        return tipo;
+    }
 
     public Endereco comId(UUID novoId) {
         return new Endereco(novoId, logradouro, numero, complemento, bairro, cidade, estado, cep, tipo);

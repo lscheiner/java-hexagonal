@@ -3,7 +3,6 @@ package br.scheiner.hexagonal.cadastro.domain;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -20,39 +19,57 @@ public final class Pessoa extends DomainObject {
     private final List<Endereco> enderecos;
 
     public Pessoa(
-    		UUID id, 
-    		String nome, 
-    		Cpf cpf, 
-    		LocalDate dataNascimento,
-            Email email, 
-            String telefone, 
-            List<Endereco> enderecos
-            ) {
-        
-    	this.id = generateId(id);
+            UUID id,
+            String nome,
+            Cpf cpf,
+            LocalDate dataNascimento,
+            Email email,
+            String telefone,
+            List<Endereco> enderecos) {
+        this.id = generateId(id);
         this.nome = requireNonBlank(nome, "Nome");
         this.cpf = cpf;
 
-        if (dataNascimento == null || dataNascimento.isAfter(LocalDate.now(ZoneId.of("America/Sao_Paulo"))))
+        if (dataNascimento == null || dataNascimento.isAfter(LocalDate.now(ZoneId.of("America/Sao_Paulo")))) {
             throw new DomainException("Data de nascimento invalida");
-        
+        }
         this.dataNascimento = dataNascimento;
 
-        if (enderecos == null || enderecos.isEmpty())
+        if (enderecos == null || enderecos.isEmpty()) {
             throw new DomainException("A pessoa deve possuir ao menos um endereco");
-        
-        this.enderecos = Collections.unmodifiableList(new ArrayList<>(enderecos));
+        }
+        this.enderecos = List.copyOf(enderecos);
         this.email = email;
         this.telefone = trimOrNull(telefone);
     }
 
-    public UUID getId() { return id; }
-    public String getNome() { return nome; }
-    public Cpf getCpf() { return cpf; }
-    public LocalDate getDataNascimento() { return dataNascimento; }
-    public Email getEmail() { return email; }
-    public String getTelefone() { return telefone; }
-    public List<Endereco> getEnderecos() { return enderecos; }
+    public UUID getId() {
+        return id;
+    }
+
+    public String getNome() {
+        return nome;
+    }
+
+    public Cpf getCpf() {
+        return cpf;
+    }
+
+    public LocalDate getDataNascimento() {
+        return dataNascimento;
+    }
+
+    public Email getEmail() {
+        return email;
+    }
+
+    public String getTelefone() {
+        return telefone;
+    }
+
+    public List<Endereco> getEnderecos() {
+        return enderecos;
+    }
 
     public Pessoa atualizar(String nome, LocalDate dataNascimento, Email email, String telefone) {
         return new Pessoa(id, nome, cpf, dataNascimento, email, telefone, enderecos);
@@ -63,18 +80,16 @@ public final class Pessoa extends DomainObject {
     }
 
     public Pessoa adicionarEndereco(Endereco endereco) {
-        var novaLista = new ArrayList<>(this.enderecos);
+        var novaLista = new ArrayList<>(enderecos);
         novaLista.add(endereco);
         return new Pessoa(id, nome, cpf, dataNascimento, email, telefone, novaLista);
     }
 
     public Pessoa atualizarEndereco(UUID enderecoId, Endereco novosDados) {
-       
-    	var novaLista = new ArrayList<Endereco>(this.enderecos.size());
-       
-        boolean alterado = false;
+        var novaLista = new ArrayList<Endereco>(enderecos.size());
+        var alterado = false;
 
-        for (var atual : this.enderecos) {
+        for (var atual : enderecos) {
             if (atual.getId().equals(enderecoId)) {
                 novaLista.add(novosDados.comId(enderecoId));
                 alterado = true;
@@ -83,20 +98,20 @@ public final class Pessoa extends DomainObject {
             }
         }
 
-        if (!alterado)
+        if (!alterado) {
             throw new DomainException("Endereco nao encontrado para esta pessoa");
+        }
 
         return new Pessoa(id, nome, cpf, dataNascimento, email, telefone, novaLista);
     }
 
     public Pessoa removerEndereco(UUID enderecoId) {
-        
-    	var novaLista = new ArrayList<>(this.enderecos);
-        
-        boolean removido = novaLista.removeIf(e -> e.getId().equals(enderecoId));
+        var novaLista = new ArrayList<>(enderecos);
+        var removido = novaLista.removeIf(endereco -> endereco.getId().equals(enderecoId));
 
-        if (!removido)
+        if (!removido) {
             throw new DomainException("Endereco nao encontrado para esta pessoa");
+        }
 
         return new Pessoa(id, nome, cpf, dataNascimento, email, telefone, novaLista);
     }

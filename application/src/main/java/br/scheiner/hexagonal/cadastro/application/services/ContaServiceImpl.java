@@ -7,7 +7,10 @@ import br.scheiner.hexagonal.cadastro.domain.Conta;
 
 public class ContaServiceImpl implements ContaService {
     private final ContaRepository repository;
-    public ContaServiceImpl(ContaRepository repository) { this.repository = repository; }
+
+    public ContaServiceImpl(ContaRepository repository) {
+        this.repository = repository;
+    }
 
     @Override
     public Conta criar(Conta conta) {

@@ -11,7 +11,10 @@ import br.scheiner.hexagonal.cadastro.domain.exceptions.DomainException;
 
 public class DebitarSaldoService implements DebitarSaldo {
     private final SaldoStore saldoStore;
-    public DebitarSaldoService(SaldoStore saldoStore) { this.saldoStore = saldoStore; }
+
+    public DebitarSaldoService(SaldoStore saldoStore) {
+        this.saldoStore = saldoStore;
+    }
 
     @Override
     public void debitar(UUID contaId, BigDecimal valor, UUID refId) {

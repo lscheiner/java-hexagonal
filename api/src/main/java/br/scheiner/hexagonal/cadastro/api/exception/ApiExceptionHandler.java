@@ -8,43 +8,20 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import br.scheiner.hexagonal.cadastro.application.exceptions.CpfDuplicadoException;
-import br.scheiner.hexagonal.cadastro.application.exceptions.PaginacaoInvalidaException;
-import br.scheiner.hexagonal.cadastro.application.exceptions.PessoaNotFoundException;
-import br.scheiner.hexagonal.cadastro.application.exceptions.SaldoInsuficienteException;
+import br.scheiner.hexagonal.cadastro.application.exceptions.ApplicationException;
 import br.scheiner.hexagonal.cadastro.domain.exceptions.DomainException;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
 
-    @ExceptionHandler(PessoaNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleNotFound(PessoaNotFoundException ex) {
-        return error(HttpStatus.NOT_FOUND, ex.getMessage());
-    }
-
-    @ExceptionHandler(CpfDuplicadoException.class)
-    public ResponseEntity<ErrorResponse> handleConflict(CpfDuplicadoException ex) {
-        return error(HttpStatus.CONFLICT, ex.getMessage());
-    }
-
-    @ExceptionHandler(SaldoInsuficienteException.class)
-    public ResponseEntity<ErrorResponse> handleSaldoInsuficiente(SaldoInsuficienteException ex) {
+    @ExceptionHandler({ApplicationException.class, DomainException.class})
+    public ResponseEntity<ErrorResponse> handleBusinessError(RuntimeException ex) {
         return error(HttpStatus.UNPROCESSABLE_CONTENT, ex.getMessage());
-    }
-
-    @ExceptionHandler(DomainException.class)
-    public ResponseEntity<ErrorResponse> handleDomainValidation(DomainException ex) {
-        return error(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponse> handleInvalidJson(HttpMessageNotReadableException ex) {
         return error(HttpStatus.BAD_REQUEST, "Corpo da requisição inválido ou mal formatado");
-    }
-
-    @ExceptionHandler(PaginacaoInvalidaException.class)
-    public ResponseEntity<ErrorResponse> handleInvalidPagination(PaginacaoInvalidaException ex) {
-        return error(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
     @ExceptionHandler(Exception.class)

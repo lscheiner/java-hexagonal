@@ -59,7 +59,7 @@ public class PessoaController {
     @ApiResponse(responseCode = "409", description = "CPF já cadastrado")
     public ResponseEntity<PessoaResponse> cadastrar(@RequestBody PessoaRequest request) {
 
-    	var cadastrada = service.cadastrar(pessoaRequestMapper.map(request));
+        var cadastrada = service.cadastrar(pessoaRequestMapper.map(request));
 
         var uri = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}")
@@ -116,54 +116,59 @@ public class PessoaController {
         return ResponseEntity.noContent().build();
     }
 
-	@PutMapping("/{id}/enderecos")
-	@Operation(summary = "Substitui os endereços", description = "Substitui todos os endereços de uma pessoa pela lista enviada.")
-	@ApiResponse(responseCode = "200", description = "Endereços substituídos com sucesso")
-	@ApiResponse(responseCode = "400", description = "Dados da requisição inválidos")
-	@ApiResponse(responseCode = "404", description = "Pessoa não encontrada")
-	public PessoaResponse substituirEnderecos(@PathVariable UUID id, @RequestBody List<EnderecoRequest> requests) {
-		var novosEnderecos = requests == null ? List.<Endereco>of()
-				: requests.stream().map(enderecoRequestMapper::map).toList();
-		var atualizada = service.substituirEnderecos(id, novosEnderecos);
-		return pessoaResponseMapper.map(atualizada);
-	}
+    @PutMapping("/{id}/enderecos")
+    @Operation(summary = "Substitui os endereços", description = "Substitui todos os endereços de uma pessoa pela lista enviada.")
+    @ApiResponse(responseCode = "200", description = "Endereços substituídos com sucesso")
+    @ApiResponse(responseCode = "400", description = "Dados da requisição inválidos")
+    @ApiResponse(responseCode = "404", description = "Pessoa não encontrada")
+    public PessoaResponse substituirEnderecos(@PathVariable UUID id, @RequestBody List<EnderecoRequest> requests) {
+        var novosEnderecos = requests == null
+                ? List.<Endereco>of()
+                : requests.stream().map(enderecoRequestMapper::map).toList();
+        var atualizada = service.substituirEnderecos(id, novosEnderecos);
+        return pessoaResponseMapper.map(atualizada);
+    }
 
-	@PostMapping("/{id}/enderecos")
-	@Operation(summary = "Adiciona um endereço", description = "Inclui um novo endereço para a pessoa informada.")
-	@ApiResponse(responseCode = "201", description = "Endereço adicionado com sucesso")
-	@ApiResponse(responseCode = "400", description = "Dados da requisição inválidos")
-	@ApiResponse(responseCode = "404", description = "Pessoa não encontrada")
-	public ResponseEntity<PessoaResponse> adicionarEndereco(@PathVariable UUID id,
-			@RequestBody EnderecoRequest request) {
-		var endereco = enderecoRequestMapper.map(request);
-		var atualizada = service.adicionarEndereco(id, endereco);
+    @PostMapping("/{id}/enderecos")
+    @Operation(summary = "Adiciona um endereço", description = "Inclui um novo endereço para a pessoa informada.")
+    @ApiResponse(responseCode = "201", description = "Endereço adicionado com sucesso")
+    @ApiResponse(responseCode = "400", description = "Dados da requisição inválidos")
+    @ApiResponse(responseCode = "404", description = "Pessoa não encontrada")
+    public ResponseEntity<PessoaResponse> adicionarEndereco(
+            @PathVariable UUID id,
+            @RequestBody EnderecoRequest request) {
+        var endereco = enderecoRequestMapper.map(request);
+        var atualizada = service.adicionarEndereco(id, endereco);
 
-		var uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{enderecoId}")
-				.buildAndExpand(endereco.getId()).toUri();
+        var uri = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{enderecoId}")
+                .buildAndExpand(endereco.getId())
+                .toUri();
 
-		return ResponseEntity.created(uri).body(pessoaResponseMapper.map(atualizada));
-	}
+        return ResponseEntity.created(uri).body(pessoaResponseMapper.map(atualizada));
+    }
 
-	@PutMapping("/{id}/enderecos/{enderecoId}")
-	@Operation(summary = "Atualiza um endereço", description = "Atualiza o endereço informado de uma pessoa.")
-	@ApiResponse(responseCode = "200", description = "Endereço atualizado com sucesso")
-	@ApiResponse(responseCode = "400", description = "Dados da requisição inválidos")
-	@ApiResponse(responseCode = "404", description = "Pessoa não encontrada ou endereço inexistente")
-	public PessoaResponse atualizarEndereco(@PathVariable UUID id, @PathVariable UUID enderecoId,
-			@RequestBody EnderecoRequest request) {
+    @PutMapping("/{id}/enderecos/{enderecoId}")
+    @Operation(summary = "Atualiza um endereço", description = "Atualiza o endereço informado de uma pessoa.")
+    @ApiResponse(responseCode = "200", description = "Endereço atualizado com sucesso")
+    @ApiResponse(responseCode = "400", description = "Dados da requisição inválidos")
+    @ApiResponse(responseCode = "404", description = "Pessoa não encontrada ou endereço inexistente")
+    public PessoaResponse atualizarEndereco(
+            @PathVariable UUID id,
+            @PathVariable UUID enderecoId,
+            @RequestBody EnderecoRequest request) {
+        var endereco = enderecoRequestMapper.map(request);
+        var atualizada = service.atualizarEndereco(id, enderecoId, endereco);
+        return pessoaResponseMapper.map(atualizada);
+    }
 
-		var endereco = enderecoRequestMapper.map(request);
-		var atualizada = service.atualizarEndereco(id, enderecoId, endereco);
-		return pessoaResponseMapper.map(atualizada);
-	}
-
-	@DeleteMapping("/{id}/enderecos/{enderecoId}")
-	@Operation(summary = "Remove um endereço", description = "Remove o endereço informado da pessoa.")
-	@ApiResponse(responseCode = "204", description = "Endereço removido com sucesso")
-	@ApiResponse(responseCode = "400", description = "Não é possível deixar a pessoa sem endereços")
-	@ApiResponse(responseCode = "404", description = "Pessoa não encontrada ou endereço inexistente")
-	public ResponseEntity<Void> removerEndereco(@PathVariable UUID id, @PathVariable UUID enderecoId) {
-		service.removerEndereco(id, enderecoId);
-		return ResponseEntity.noContent().build();
-	}
+    @DeleteMapping("/{id}/enderecos/{enderecoId}")
+    @Operation(summary = "Remove um endereço", description = "Remove o endereço informado da pessoa.")
+    @ApiResponse(responseCode = "204", description = "Endereço removido com sucesso")
+    @ApiResponse(responseCode = "400", description = "Não é possível deixar a pessoa sem endereços")
+    @ApiResponse(responseCode = "404", description = "Pessoa não encontrada ou endereço inexistente")
+    public ResponseEntity<Void> removerEndereco(@PathVariable UUID id, @PathVariable UUID enderecoId) {
+        service.removerEndereco(id, enderecoId);
+        return ResponseEntity.noContent().build();
+    }
 }

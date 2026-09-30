@@ -5,7 +5,7 @@ import java.util.List;
 import br.scheiner.hexagonal.cadastro.application.outbox.OutboxEvent;
 
 public interface OutboxRepository {
-	List<OutboxEvent> reservarPendentes(int limite);
+    List<OutboxEvent> reservarPendentes(int limite);
 
-	OutboxEvent salvar(OutboxEvent evento);
+    OutboxEvent salvar(OutboxEvent evento);
 }

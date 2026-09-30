@@ -14,8 +14,21 @@ public class ContaEntity {
     @Column(name = "pessoa_id", nullable = false) private UUID pessoaId;
     @Column(nullable = false, precision = 19, scale = 2) private BigDecimal limite;
     protected ContaEntity() { }
-    public ContaEntity(UUID id, UUID pessoaId, BigDecimal limite) { this.id = id; this.pessoaId = pessoaId; this.limite = limite; }
-    public UUID getId() { return id; }
-    public UUID getPessoaId() { return pessoaId; }
-    public BigDecimal getLimite() { return limite; }
+    public ContaEntity(UUID id, UUID pessoaId, BigDecimal limite) {
+        this.id = id;
+        this.pessoaId = pessoaId;
+        this.limite = limite;
+    }
+
+    public UUID getId() {
+        return id;
+    }
+
+    public UUID getPessoaId() {
+        return pessoaId;
+    }
+
+    public BigDecimal getLimite() {
+        return limite;
+    }
 }
