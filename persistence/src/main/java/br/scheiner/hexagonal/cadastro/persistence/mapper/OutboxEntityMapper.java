@@ -24,7 +24,8 @@ public class OutboxEntityMapper implements Mapper<OutboxEvent, OutboxEntity> {
                     objectMapper.writeValueAsString(evento.getPayload()), evento.getCreatedAt(),
                     evento.getProcessadoEm());
         } catch (JsonProcessingException ex) {
-            throw new IllegalStateException("Nao foi possivel serializar o evento da outbox", ex);
+            throw new FalhaSerializacaoOutboxException(
+                    "Não foi possível serializar o evento da outbox", ex);
         }
     }
 }

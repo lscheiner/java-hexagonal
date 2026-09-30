@@ -10,10 +10,11 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Component;
 
-import br.scheiner.hexagonal.cadastro.application.ports.out.SaldoStore;
 import br.scheiner.hexagonal.cadastro.application.exceptions.DadosInvalidosException;
-import br.scheiner.hexagonal.cadastro.application.exceptions.SaldoNotFoundException;
+import br.scheiner.hexagonal.cadastro.application.ports.out.SaldoStore;
 import br.scheiner.hexagonal.cadastro.application.saldo.ResultadoDebito;
+import br.scheiner.hexagonal.cadastro.redis.adapter.handler.ResultadoLuaDebitoHandler;
+import br.scheiner.hexagonal.cadastro.redis.adapter.handler.RespostaDebitoRedisInvalidaException;
 
 @Component
 public class RedisSaldoStore implements SaldoStore {
@@ -69,9 +70,13 @@ public class RedisSaldoStore implements SaldoStore {
             );
 
     private final StringRedisTemplate redis;
+    private final List<ResultadoLuaDebitoHandler> resultadoHandlers;
 
-    public RedisSaldoStore(StringRedisTemplate redis) {
+    public RedisSaldoStore(
+            StringRedisTemplate redis,
+            List<ResultadoLuaDebitoHandler> resultadoHandlers) {
         this.redis = redis;
+        this.resultadoHandlers = List.copyOf(resultadoHandlers);
     }
 
     @Override
@@ -111,20 +116,15 @@ public class RedisSaldoStore implements SaldoStore {
         );
 
         if (result == null) {
-            throw new IllegalStateException("Lua não retornou resultado");
+            throw new RespostaDebitoRedisInvalidaException("Lua não retornou resultado");
         }
-        if (result.startsWith("SUCCESS|")) {
-            return ResultadoDebito.DEBITADO;
-        }
-        if (result.startsWith("DUPLICATE|")) {
-            return ResultadoDebito.JA_PROCESSADO;
-        }
-        return switch (result) {
-            case "INSUFFICIENT_BALANCE" -> ResultadoDebito.SALDO_INSUFICIENTE;
-            case "ACCOUNT_NOT_FOUND" -> throw new SaldoNotFoundException();
-            case "INVALID_AMOUNT" -> throw new DadosInvalidosException("Valor do débito deve ser maior que zero");
-            default -> throw new IllegalStateException("Falha no débito Redis: " + result);
-        };
+
+        return resultadoHandlers.stream()
+                .filter(handler -> handler.supports(result))
+                .findFirst()
+                .map(ResultadoLuaDebitoHandler::interpretar)
+                .orElseThrow(() -> new RespostaDebitoRedisInvalidaException(
+                        "Resposta inesperada do Lua para débito Redis: " + result));
     }
 
     private void validarDebito(UUID contaId, BigDecimal valor, UUID refId, UUID eventId) {
@@ -136,11 +136,11 @@ public class RedisSaldoStore implements SaldoStore {
         }
     }
 
-    private String saldoKey(UUID contaId) {
+    private static String saldoKey(UUID contaId) {
         return "account:{" + contaId + "}:balance";
     }
 
-    private String transacaoKey(UUID contaId, UUID transactionId) {
+    private static String transacaoKey(UUID contaId, UUID transactionId) {
         return "account:{" + contaId + "}:tx:" + transactionId;
     }
 }

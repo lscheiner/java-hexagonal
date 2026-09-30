@@ -24,7 +24,8 @@ public class OutboxDomainMapper implements Mapper<OutboxEntity, OutboxEvent> {
             return new OutboxEvent(entidade.getId(), entidade.getAggregateId(), entidade.getEventType(), payload,
                     entidade.getCreatedAt(), entidade.getProcessedAt());
         } catch (JsonProcessingException ex) {
-            throw new IllegalStateException("Payload da outbox invalido: " + entidade.getId(), ex);
+            throw new FalhaSerializacaoOutboxException(
+                    "Payload da outbox inválido: " + entidade.getId(), ex);
         }
     }
 }
